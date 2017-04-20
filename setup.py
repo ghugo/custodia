@@ -34,7 +34,7 @@ requirements = [
     'cryptography',
     'jwcrypto',
     'six',
-    'requests'
+    'requests==2.12.5'
 ]
 
 # extra requirements
@@ -95,6 +95,7 @@ custodia_stores = [
     'EncryptedStore = custodia.store.enclite:EncryptedStore',
     'EtcdStore = custodia.store.etcdstore:EtcdStore',
     'SqliteStore = custodia.store.sqlite:SqliteStore',
+    'BarbicanStore = custodia.store.barbican:BarbicanStore'
 ]
 
 

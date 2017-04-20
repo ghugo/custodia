@@ -1,5 +1,4 @@
 # Copyright (C) 2015  Custodia Project Contributors - see LICENSE file
-from __future__ import absolute_import
 
 import json
 import os
@@ -184,13 +183,13 @@ class Secrets(HTTPConsumer):
                 if not ok:
                     raise HTTPError(404)
 
-            self.root.store.span(basename)
+            result = self.root.store.span(basename)
         except CSStoreExists:
             raise HTTPError(409)
         except CSStoreError:
             raise HTTPError(500)
 
-        output = msg.reply(None)
+        output = msg.reply(result)
         if output is not None:
             response['headers'][
                 'Content-Type'] = 'application/json; charset=utf-8'
@@ -298,13 +297,14 @@ class Secrets(HTTPConsumer):
             if not ok:
                 raise HTTPError(404)
 
-            ok = self.root.store.set(key, msg.payload)
+            reply = self.root.store.set(key, msg.payload)
         except CSStoreExists:
             raise HTTPError(409)
         except CSStoreError:
             raise HTTPError(500)
 
-        output = msg.reply(None)
+        output = msg.reply(reply)
+
         if output is not None:
             response['headers'][
                 'Content-Type'] = 'application/json; charset=utf-8'
