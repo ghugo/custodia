@@ -7,6 +7,7 @@ from cryptography.hazmat.primitives import constant_time
 
 from custodia import log
 from custodia.plugin import HTTPAuthenticator, PluginOption
+from keystoneauth1 import identity, session
 
 
 class SimpleCredsAuth(HTTPAuthenticator):
@@ -54,6 +55,38 @@ class SimpleHeaderAuth(HTTPAuthenticator):
         self.audit_svc_access(log.AUDIT_SVC_AUTH_PASS,
                               request['client_id'], value)
         request['remote_user'] = value
+        return True
+
+
+class SimpleKeystoneAuth(HTTPAuthenticator):
+    auth_name = PluginOption(str, 'BARBICAN_AUTH_NAME', 'env username')
+    auth_pass = PluginOption(str, 'BARBICAN_AUTH_PASS', 'env password')
+
+    def handle(self, request):
+        name = request['headers'].get(self.auth_name, None)
+        pwd = request['headers'].get(self.auth_pass, None)
+        if name is None or pwd is None:
+            self.logger.debug('Barbican creds not provided')
+            return None
+
+        name_val = os.getenv(name)
+        pass_val = os.getenv(pwd)
+        if name_val is None or pass_val is None:
+            raise ValueError('Invalid Barbican Creds' + name_val + pass_val)
+
+        auth = identity.V3Password(auth_url='http://controller:5000/v3',
+                                   username=name_val,
+                                   user_domain_name='default',
+                                   password=pass_val,
+                                   project_name='service',
+                                   project_domain_name='default')
+
+        sess = session.Session(auth=auth)
+        try:
+            self.store.session = sess
+        except:
+            raise ValueError('Barbican store not enabled')
+
         return True
 
 

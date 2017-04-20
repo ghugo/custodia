@@ -28,20 +28,10 @@ class BarbicanStore(CSStore):
 
     def __init__(self, config, section):
         super(BarbicanStore, self).__init__(config, section)
-        self.auth = identity.V3Password(auth_url='http://localhost:5000/v3',
-                                        username='barbican',
-                                        user_domain_name='default',
-                                        password='barbican',
-                                        project_name='service',
-                                        project_domain_name='default')
+        self.session = None
 
-    def _create_keystone_session(self):
-        return session.Session(auth=self.auth)
-
-    def _create_barbican_session(self, sess=None):
-        if sess is None:
-            sess = self._create_keystone_session()
-        return client.Client(session=sess)
+    def _create_barbican_session(self):
+        return client.Client(session=self.session)
 
     def _get_container(self, barbican, ref):
         href = BARBICAN_URL.format('containers', ref)
@@ -84,8 +74,7 @@ class BarbicanStore(CSStore):
         container_ref = key.split('/')[-2]
         keyid = key.split('/')[-1]
 
-        kasess = self._create_keystone_session()
-        sess = self._create_barbican_session(sess=kasess)
+        sess = self._create_barbican_session()
         secret = sess.secrets.create(name=keyid,payload=value)
         secret_ref = secret.store()
 
@@ -94,7 +83,7 @@ class BarbicanStore(CSStore):
             'secret_ref': secret_ref
         }
         url = BARBICAN_URL.format('containers', container_ref) + '/secrets'
-        response = kasess.post(url, json=json_body)
+        response = self.session.post(url, json=json_body)
         return response.json()['container_ref']
 
         #container = self._get_container(sess, container_ref)

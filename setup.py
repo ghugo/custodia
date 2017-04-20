@@ -68,6 +68,7 @@ with open('README') as f:
 custodia_authenticators = [
     'SimpleCredsAuth = custodia.httpd.authenticators:SimpleCredsAuth',
     'SimpleHeaderAuth = custodia.httpd.authenticators:SimpleHeaderAuth',
+    'SimpleKeystoneAuth = custodia.httpd.authenticators:SimpleKeystoneAuth',
     'SimpleAuthKeys = custodia.httpd.authenticators:SimpleAuthKeys',
     ('SimpleClientCertAuth = '
      'custodia.httpd.authenticators:SimpleClientCertAuth'),
