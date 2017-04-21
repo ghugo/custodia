@@ -59,35 +59,41 @@ class SimpleHeaderAuth(HTTPAuthenticator):
 
 
 class SimpleKeystoneAuth(HTTPAuthenticator):
-    auth_name = PluginOption(str, 'BARBICAN_AUTH_NAME', 'env username')
-    auth_pass = PluginOption(str, 'BARBICAN_AUTH_PASS', 'env password')
+    auth_name = PluginOption(str, 'BARBICAN_USERNAME', 'env username')
+    auth_pass = PluginOption(str, 'BARBICAN_PASS', 'env password')
+    domain_name = PluginOption(str, 'USER_DOMAIN_NAME', 'env domain name')
+    project_name = PluginOption(str, 'PROJECT_NAME', 'env project name')
+    project_domain_name = PluginOption(str, 'PROJECT_DOMAIN_NAME', '')
 
     def handle(self, request):
         name = request['headers'].get(self.auth_name, None)
         pwd = request['headers'].get(self.auth_pass, None)
-        if name is None or pwd is None:
-            self.logger.debug('Barbican creds not provided')
-            return None
+        dom_name = request['headers'].get(self.domain_name, None)
+        proj_name = request['headers'].get(self.project_name, None)
+        proj_dom_name = request['headers'].get(self.project_domain_name, None)
+
 
         name_val = os.getenv(name)
         pass_val = os.getenv(pwd)
+        dom_name_val = os.getenv(dom_name)
+        proj_name_val = os.getenv(proj_name)
+        proj_dom_name_val = os.getenv(proj_dom_name)
         if name_val is None or pass_val is None:
-            raise ValueError('Invalid Barbican Creds' + name_val + pass_val)
+            raise ValueError('Invalid Barbican Creds')
 
         auth = identity.V3Password(auth_url='http://controller:5000/v3',
                                    username=name_val,
-                                   user_domain_name='default',
+                                   user_domain_name=dom_name_val,
                                    password=pass_val,
-                                   project_name='service',
-                                   project_domain_name='default')
+                                   project_name=proj_name_val,
+                                   project_domain_name=proj_dom_name_val)
 
-        sess = session.Session(auth=auth)
         try:
-            self.store.session = sess
+            sess = session.Session(auth=auth)
         except:
-            raise ValueError('Barbican store not enabled')
+            raise ValueError('Authentication Failed!')
 
-        return True
+        return True, sess
 
 
 class SimpleAuthKeys(HTTPAuthenticator):

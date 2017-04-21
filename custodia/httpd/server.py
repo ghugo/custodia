@@ -431,7 +431,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             raise HTTPError(403)
         valid_once = False
         for auth in authers:
-            valid = authers[auth].handle(request)
+            valid, sess = authers[auth].handle(request)
             if valid is False:
                 raise HTTPError(403)
             elif valid is True:
@@ -468,6 +468,12 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                 con = config['consumers'][path_chain]
                 if len(trail) != 0:
                     request['trail'] = trail
+                # If the store can accept a session
+                try:
+                    con.store.set_credentials(sess)
+                except:
+                    # Skip
+                    pass
                 return con.handle(request)
             trail.insert(0, path_chain[-1])
             path_chain = path_chain[:-1]

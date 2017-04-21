@@ -230,9 +230,10 @@ class Secrets(HTTPConsumer):
             return request['remote_user']
         elif 'creds' in request:
             creds = request['creds']
-            return '<pid={pid:d} uid={uid:d} gid={gid:d}>'.format(**creds)
-        else:
-            return 'Unknown'
+            if creds:
+                return '<pid={pid:d} uid={uid:d} gid={gid:d}>'.format(**creds)
+
+        return 'Unknown'
 
     def _audit(self, ok, fail, fn, trail, request, response):
         action = fail

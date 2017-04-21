@@ -24,11 +24,15 @@ from keystoneauth1 import session
 # TODO(gagehugo): Get this from the keystone endpoint instead
 BARBICAN_URL = 'http://controller:9311/v1/{}/{}'
 
+
 class BarbicanStore(CSStore):
 
     def __init__(self, config, section):
         super(BarbicanStore, self).__init__(config, section)
         self.session = None
+
+    def set_credentials(self, sess):
+        self.session = sess
 
     def _create_barbican_session(self):
         return client.Client(session=self.session)
