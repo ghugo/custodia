@@ -59,37 +59,32 @@ class SimpleHeaderAuth(HTTPAuthenticator):
 
 
 class SimpleKeystoneAuth(HTTPAuthenticator):
-    auth_name = PluginOption(str, 'BARBICAN_USERNAME', 'env username')
-    auth_pass = PluginOption(str, 'BARBICAN_PASS', 'env password')
     domain_name = PluginOption(str, 'USER_DOMAIN_NAME', 'env domain name')
     project_name = PluginOption(str, 'PROJECT_NAME', 'env project name')
     project_domain_name = PluginOption(str, 'PROJECT_DOMAIN_NAME', '')
 
     def handle(self, request):
-        name = request['headers'].get(self.auth_name, None)
-        pwd = request['headers'].get(self.auth_pass, None)
         dom_name = request['headers'].get(self.domain_name, None)
         proj_name = request['headers'].get(self.project_name, None)
         proj_dom_name = request['headers'].get(self.project_domain_name, None)
 
+        cert = request.get('client_cert')
+        cacert = '/root/openstack_certs/cacert.pem'
+        key = '/root/openstack_certs/signing_key.pem'
 
-        name_val = os.getenv(name)
-        pass_val = os.getenv(pwd)
-        dom_name_val = os.getenv(dom_name)
-        proj_name_val = os.getenv(proj_name)
-        proj_dom_name_val = os.getenv(proj_dom_name)
-        if name_val is None or pass_val is None:
-            raise ValueError('Invalid Barbican Creds')
+        if cert is None:
+            raise ValueError('Invalid Certificate')
 
-        auth = identity.V3Password(auth_url='http://controller:5000/v3',
-                                   username=name_val,
-                                   user_domain_name=dom_name_val,
-                                   password=pass_val,
-                                   project_name=proj_name_val,
-                                   project_domain_name=proj_dom_name_val)
+        auth = identity.V3TokenlessAuth(auth_url='https://controller:5000/v3',
+                                        domain_name=dom_name,
+                                        project_name=proj_name,
+                                        project_domain_name=proj_dom_name)
 
         try:
-            sess = session.Session(auth=auth)
+            sess = session.Session(auth=auth,
+                                   cert=(cert,
+                                         key),
+                                   verify=cacert)
         except:
             raise ValueError('Authentication Failed!')
 
