@@ -59,32 +59,24 @@ class SimpleHeaderAuth(HTTPAuthenticator):
 
 
 class SimpleKeystoneAuth(HTTPAuthenticator):
-    domain_name = PluginOption(str, 'USER_DOMAIN_NAME', 'env domain name')
-    project_name = PluginOption(str, 'PROJECT_NAME', 'env project name')
-    project_domain_name = PluginOption(str, 'PROJECT_DOMAIN_NAME', '')
 
     def handle(self, request):
-        dom_name = request['headers'].get(self.domain_name, None)
-        proj_name = request['headers'].get(self.project_name, None)
-        proj_dom_name = request['headers'].get(self.project_domain_name, None)
+        user_name = os.gentenv('OS_USERNAME')
+        passwd = os.gentenv('OS_PASSWORD')
+        usr_dom_name = os.getenv('OS_USER_DOMAIN_ID')
+        proj_name = os.getenv('OS_PROJECT_NAME')
+        proj_dom_name = os.getenv('OS_PROJECT_DOMAIN_ID')
 
-        cert = request.get('client_cert')
-        cacert = '/root/openstack_certs/cacert.pem'
-        key = '/root/openstack_certs/signing_key.pem'
-
-        if cert is None:
-            raise ValueError('Invalid Certificate')
-
-        auth = identity.V3TokenlessAuth(auth_url='https://controller:5000/v3',
-                                        domain_name=dom_name,
-                                        project_name=proj_name,
-                                        project_domain_name=proj_dom_name)
+        auth = identity.V3Password(auth_url='http://localhost:5000/v3',
+                                   username=user_name,
+                                   password=passwd,
+                                   user_domain_name=usr_dom_name,
+                                   domain_name=dom_name,
+                                   project_name=proj_name,
+                                   project_domain_name=proj_dom_name)
 
         try:
-            sess = session.Session(auth=auth,
-                                   cert=(cert,
-                                         key),
-                                   verify=cacert)
+            sess = session.Session(auth=auth)
         except:
             raise ValueError('Authentication Failed!')
 
